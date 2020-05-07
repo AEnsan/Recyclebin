@@ -1,5 +1,4 @@
 # Recyclebin
-Unix recyclebin and restore
 Unix does not have recycle and restor commands. This project provides recycle and restore scripts for Unix. 
 A folder with name recyclebin is created on Home directory.  A hidden file with name .restore.info stores all information about files that are moved to the recyclebin. By using store, the files are restored to their original address.
 Options are also available for recycle as follows: 
