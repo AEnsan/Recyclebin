@@ -1,0 +1,115 @@
+#!/bin/bash
+flag=
+
+
+if [[ ! -f $HOME/.restore.info ]]
+then
+        touch $HOME/.restore.info
+fi
+
+if [ $# -eq 0 ]
+then
+        echo "restore: missing operand"
+        exit 1;
+fi
+
+
+
+
+# Loop until all parameters are used up
+while [ "$1" != "" ]; do
+flag=true
+if [[ ! -f $HOME/recyclebin/$1 ]]
+then
+        echo "restore: cannot remove '$1': No such file or directory"
+        exit 1
+	shift        
+continue
+
+fi
+
+
+#fulldir=$(grep $1  $HOME/.restore.info|cut -d ":" -f2|tr -s " ")
+fulldir=$(grep $1  $HOME/.restore.info|cut -d ":" -f2)
+#echo "this is full dir: $fulldir"
+
+mydir=$(dirname $fulldir)
+name=$(basename $fulldir)
+#echo "This is the directory I am trying to restore: #mydir"
+
+#echo "Full directory is $fulldir"
+if [ -e "$mydir/$name" ]
+then
+  read -p "Do you want to overwrite? y/n " var
+  if [[ $var =~ y.* || $var =~ Y.* ]]
+  then 
+	  rm -r $mydir/$name
+	  mv $HOME/recyclebin/$1 $mydir/$name
+          
+	  grep -v "$1" $HOME/.restore.info > $HOME/temp
+          rm $HOME/.restore.info
+         
+	  mv $HOME/temp $HOME/.restore.info
+	  # changed 1 shift
+	  # changed 2 continue
+  fi
+###When the file does not exist  
+else 
+	  #changed 3 shift 
+	 #changed 4 continue
+ 
+  
+ if [ -e "mydir" ]
+ then
+#############
+   if [ -f "mydir" ]
+   
+   then 
+	   read -p "Do you want to overwrite? y/n " var1
+##############
+    if [[ $var1 =~ y.* || $var1 =~ Y.* ]]
+    then
+          rm -r $mydir
+	  mkdir -p $mydir
+          mv $HOME/recyclebin/$1 $mydir/$name
+
+          grep -v "$1" $HOME/.restore.info > $HOME/temp
+          rm $HOME/.restore.info
+
+          mv $HOME/temp $HOME/.restore.info
+          
+    fi
+################
+  elif [ -d "mydir" ]
+  then
+
+	  mv $HOME/recyclebin/$1 $mydir/$name
+
+          grep -v "$1" $HOME/.restore.info > $HOME/temp
+          rm $HOME/.restore.info
+
+          mv $HOME/temp $HOME/.restore.info
+#########
+ fi
+ ########
+
+  # When the directory does not exist
+else 
+
+mkdir -p $mydir
+mv $HOME/recyclebin/$1 $mydir/$name  
+grep -v "$1" $HOME/.restore.info > $HOME/temp
+rm $HOME/.restore.info
+mv $HOME/temp $HOME/.restore.info
+
+
+
+#echo "$1 has been restored successfully!"
+
+fi   #directory exist
+
+fi   # file exists
+# Shift all the parameters down by one
+shift
+
+done
