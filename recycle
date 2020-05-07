@@ -1,0 +1,231 @@
+#!/bin/bash
+##########################
+
+optFunc() {
+        interact=false
+        message=false
+	recursion=false
+
+while getopts :ivr opt
+do
+   case $opt in
+        i) interact=true;;
+        v) message=true;;
+	r) recursion=true;;
+        *) echo Bad Option - $OPTARG
+           exit 1;;
+   esac
+done
+}
+
+
+#echo $OPTIND
+
+#######################o $i#
+function  rec(){
+if [[ ! -d ~/recyclebin ]]
+then
+  mkdir $HOME/recyclebin
+fi
+
+if [[ ! -f $HOME/.restore.info ]]
+then
+        touch $HOME/.restore.info
+fi
+
+if [ $# -eq 0 ]
+then
+        echo "recycle: missing operand"
+        exit 1;
+fi
+
+
+# Loop until all parameters are used up
+while [ "$1" != "" ]; do
+
+
+        find $1 > /dev/null  2>&1
+
+        if [ $? -eq 1 ]
+        then
+        echo "recycle: cannot remove '$1': No such file or directory"
+	shift
+        continue
+fi
+################################# ls without recursion -only for matching
+for file in $(ls -d -1 $1  2>/dev/null)
+do
+#################
+ if [[ ! -e $file ]]
+ then
+        echo "recycle: cannot remove '$file': No such file or directory"
+       
+        continue
+        
+ fi
+################# Informaion abouth path and name of each file
+ absolute_add=$(realpath $file)
+# echo "absoloute address is:$absolute_add"
+ dir_address=$(dirname $absolute_add)
+# echo "directory address is:$dir_address"
+ baseAdd=$(basename $absolute_add)
+# echo "file name is:$baseAdd"
+# id=$(ls -i $dir_address|grep "$baseAdd"|sed 's/^ *//'|cut -d" " -f1)
+ #id=$(ls -i $dir_address|grep "$baseAdd"|cut -d" " -f1)
+ id=$(ls -d -i $absolute_add|cut -d" " -f1)
+ #echo "id is:$id"
+##############oi# If the input is a directory
+ if [[ -d $file ]]
+ then
+################## If recursive option is not used
+  if ! $recursion
+  then
+
+     echo  "recycle: cannot remove '$file': Is a directory"
+      #shift
+       #continue
+  else 
+############### If reursive option is used
+  for newfile in $(find $file 2>/dev/null)
+  do
+############ Address of files in sub directoires
+   newabsolute_add=$(realpath $newfile)
+   newdir_address=$(dirname $newabsolute_add)
+   newbaseAdd=$(basename $newabsolute_add)
+   newid=$(ls -i $newdir_address|grep "$newbaseAdd"|cut -d" " -f1)
+   if [[ -f $newfile ]]
+   then
+############ simlar check for all files
+   if  $interact && $message
+   then
+   #echo " true ture"
+    read -p"Are you sure that you want to move $newfile to recyclebin?" var
+    if [[ $var =~ y.* || $var =~ Y.* ]]
+    then
+        #       baseAdd=$(basename $file)
+     mv $newfile $HOME/recyclebin
+     mv $HOME/recyclebin/"$newbaseAdd" $HOME/recyclebin/"$newbaseAdd""_$newid"
+     echo "$newbaseAdd""_$newid:$newabsolute_add">> $HOME/.restore.info
+     echo "removed '$newfile'"
+
+    fi
+   fi
+#########################################
+   if  $interact &&  ! $message
+   then
+        #echo " true false"
+     read -p"Are you sure that you want to move $newfile to recyclebin?" var
+     if [[ $var =~ y.* || $var =~ Y.* ]]
+      then
+
+       mv $newfile $HOME/recyclebin
+       mv $HOME/recyclebin/"$newbaseAdd" $HOME/recyclebin/"$newbaseAdd""_$newid"
+       echo "$newbaseAdd""_$newid:$newabsolute_add" >> $HOME/.restore.info
+
+      fi
+    fi
+##########################################
+    if  ! $interact && $message
+    then
+        #echo " false true"
+        mv $newfile $HOME/recyclebin
+        mv $HOME/recyclebin/"$newbaseAdd" $HOME/recyclebin/"$newbaseAdd""_$newid"
+        echo  "$newbaseAdd""_$newid:$newabsolute_add">> $HOME/.restore.info
+        echo "removed '$newfile'"
+
+     fi
+##########
+    if  ! $interact && ! $message
+    then
+      
+      mv $newfile $HOME/recyclebin
+      mv $HOME/recyclebin/"$newbaseAdd" $HOME/recyclebin/"$newbaseAdd""_$newid"
+      echo  "$newbaseAdd""_$newid:$newabsolute_add">> $HOME/.restore.info
+    fi
+###########
+  fi
+ done	
+##########################
+  counter=$(find $file  -type f | wc -l)
+  if [ $counter -eq 0 ]
+  then
+	rm -r $file	
+  fi
+
+
+ fi
+
+################################### When it is not a directory
+ elif [[ -f $file ]]
+ then
+###################################
+ temp1=$(echo "$HOME/project/recycle")
+ temp2=$(echo "$absolute_add")
+ if [ "$temp2" = "$temp1" ]
+  then
+        echo " Attempting to delete recycle – operation aborted"
+       # flag=false
+      exit 1
+      continue
+  fi
+############################################################
+  if  $interact && $message
+  then
+#echo " true true"
+    read -p"Are you sure that you want to move $file to recyclebin?" var
+    if [[ $var =~ y.* || $var =~ Y.* ]]
+     then
+        #       baseAdd=$(basename $file)
+         mv $file $HOME/recyclebin
+         mv $HOME/recyclebin/"$baseAdd" $HOME/recyclebin/"$baseAdd""_$id"
+         echo "$baseAdd""_$id:$absolute_add">> $HOME/.restore.info
+         echo "removed '$file'"
+
+     fi
+   fi
+#########################################
+   if  $interact &&  ! $message
+   then
+        #echo " true false"
+        read -p"Are you sure that you want to move $file to recyclebin?" var
+        if [[ $var =~ y.* || $var =~ Y.* ]]
+        then
+
+            mv $file $HOME/recyclebin
+            mv $HOME/recyclebin/"$baseAdd" $HOME/recyclebin/"$baseAdd""_$id"
+            echo "$baseAdd""_$id:$absolute_add" >> $HOME/.restore.info
+
+         fi
+     fi
+##########################################
+     if  ! $interact && $message
+     then
+        #echo " false true"
+         mv $file $HOME/recyclebin
+         mv $HOME/recyclebin/"$baseAdd" $HOME/recyclebin/"$baseAdd""_$id"
+         echo  "$baseAdd""_$id:$absolute_add">> $HOME/.restore.info
+         echo "removed '$file'"
+
+     fi
+#######################################
+     if  ! $interact && ! $message
+     then
+        #echo " false false"
+      mv $file $HOME/recyclebin
+      mv $HOME/recyclebin/"$baseAdd" $HOME/recyclebin/"$baseAdd""_$id"
+      echo  "$baseAdd""_$id:$absolute_add">> $HOME/.restore.info
+      fi
+########################################
+
+  fi
+ done
+
+# Shift all the parameters down by one
+shift
+done
+
+}
+###################################
+optFunc $*
+shift $((OPTIND-1))
+rec $*
